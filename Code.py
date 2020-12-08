@@ -16,14 +16,18 @@ def getStopWords(filename):
     return words
 
 
-def parseFeatureWords(filename, matrix):
+def parseFeatureWords(filename):
+    featureWords = []
+
     with open(filename) as file:
         for i in range(numberAspects):
             line = file.readline()
             words = line.split()
             #get rid of aspect name
             words.pop(0)
-            matrix.append(words)
+            featureWords.append(words)
+
+    return featureWords
         
 
 #preprocess data set
@@ -31,7 +35,11 @@ def parseFeatureWords(filename, matrix):
 #convert all words to lowercase
 #remove punctuations and stop words, and terms occurring in less than 10 reviews
 #use stemming
-def parseReviews(filename, reviews, ratings, stopWords):
+def parseReviews(filename, stopWords):
+    reviews = []                     #list of parsed reviews
+    ratings = []
+    vocab = []
+
     with open(filename) as file:
         while (True):
             authorLine = file.readline()
@@ -61,6 +69,8 @@ def parseReviews(filename, reviews, ratings, stopWords):
                     skip = True
                     break
 
+            ratings.append(ratingsList)
+
             if skip:
                 continue
 
@@ -72,6 +82,14 @@ def parseReviews(filename, reviews, ratings, stopWords):
                 word = word.lower()
                 if word not in stopWords:
                     finalContentWords.append(word)
+                    if word not in vocab:
+                        vocab.append(word)
+
+
+            reviews.append(finalContentWords)
+
+    return reviews, ratings, vocab
+
 
 
 
@@ -81,28 +99,19 @@ def main():
     aspects = ["Value", "Rooms", "Location", "Cleanliness", "Check in/front desk", "Service", "Business service"]
     #aspect_weights = np.zeros((d, len(aspects))), d reviews
     #aspect_ratings = np.zeros((d, len(aspects))), d reviews
-    reviews = []
-    vocab = []
-    featureWords = []
-    ratings = []
+
     stopWords = getStopWords("Data/StopWords.txt")
 
-    parseFeatureWords("Data/FeatureWords.txt", featureWords)
+    featureWords = parseFeatureWords("Data/FeatureWords.txt", featureWords)
     
-    parseReviews("Data/temp.txt", reviews, ratings, stopWords)
-    """
-    with open("one.txt") as file:
-        line = file.readline()
-        punctuations = '''!()-[]{};:'"\,<>./?@#$%^&*_~'''
-        for char in line:
-            if char in punctuations:
-                line = line.replace(char, "")
-        print(line.split()) 
-    """
+    reviews, ratings, vocab = parseReviews("Data/temp.txt", reviews, ratings, stopWords)
 
 
     #go sentence by sentence
     #classify a sentence as describing the topic whose feature words it has the most of
+    #create lists of sentences per each topic
+    #find p(word | topic) from that
+    
 
     #create featureWords matrix [7][n]
 
