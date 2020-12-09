@@ -3,8 +3,10 @@ import nltk
 from nltk.stem import PorterStemmer
 import re
 import operator
+from nltk.sentiment.vader import SentimentIntensityAnalyzer
 
 numberAspects = 7
+
 
 def getStopWords(filename):
     file = open(filename, "r")
@@ -25,10 +27,10 @@ def parseFeatureWords(filename):
         for i in range(numberAspects):
             line = file.readline()
             words = line.split()
-            #get rid of aspect name
+            # get rid of aspect name
             words.pop(0)
-            #lowercase, stemming, remove stop words
-            
+            # lowercase, stemming, remove stop words
+
             ps = PorterStemmer()
             wordArray = []
 
@@ -36,7 +38,6 @@ def parseFeatureWords(filename):
                 word = ps.stem(word)
                 word = word.lower()
                 wordArray.append(word)
-            
 
             featureWords.append(wordArray)
             '''
@@ -44,15 +45,15 @@ def parseFeatureWords(filename):
             '''
 
     return featureWords
-        
 
-#preprocess data set
-#remove reviews with missing aspect rating or doc length less than 50 words
-#convert all words to lowercase
-#remove punctuations and stop words, and terms occurring in less than 10 reviews
-#use stemming
+
+# preprocess data set
+# remove reviews with missing aspect rating or doc length less than 50 words
+# convert all words to lowercase
+# remove punctuations and stop words, and terms occurring in less than 10 reviews
+# use stemming
 def parseReviews(filename, stopWords):
-    reviews = []                     #list of parsed reviews, each review is a list of sentences
+    reviews = []  # list of parsed reviews, each review is a list of sentences
     ratings = []
     vocab = []
 
@@ -60,20 +61,20 @@ def parseReviews(filename, stopWords):
         while (True):
             authorLine = file.readline()
             if len(authorLine) == 0:
-                #reached end of file
+                # reached end of file
                 break
-            
+
             contentLine = file.readline()
             dateLine = file.readline()
             ratingLine = file.readline()
             blankLine = file.readline()
 
             contentWords = contentLine.split('>')[1]
-           
+
             if len(contentWords) < 50:
                 continue
 
-            #skip if a rating is missing
+            # skip if a rating is missing
             skip = False
             ratingsList = ratingLine.split('>')[1].split()
             ratingsInts = []
@@ -89,9 +90,8 @@ def parseReviews(filename, stopWords):
                 continue
 
             ratings.append(ratingsInts)
-            
-            
-            #split by sentence
+
+            # split by sentence
             sentences = re.split(r'[!.?]+', contentWords)
             finalContentWords = []
 
@@ -99,10 +99,10 @@ def parseReviews(filename, stopWords):
                 if len(sentence) == 0:
                     continue
 
-                #remove punctuation
-            
+                # remove punctuation
+
                 punctuations = '''!()-[]{};:'"\,./?@#$%^&*_~'''
-            
+
                 for char in sentence:
                     if char in punctuations:
                         sentence = sentence.replace(char, "")
@@ -111,7 +111,7 @@ def parseReviews(filename, stopWords):
                 if len(words) == 0:
                     continue
 
-                #lowercase, stemming, remove stop words
+                # lowercase, stemming, remove stop words
                 ps = PorterStemmer()
                 wordArray = []
 
@@ -127,21 +127,20 @@ def parseReviews(filename, stopWords):
                     finalContentWords.append(wordArray)
 
             reviews.append(finalContentWords)
-            
 
     return reviews, ratings, vocab
 
 
-#go sentence by sentence
-#classify a sentence as describing the topic whose feature words it has the most of
+# go sentence by sentence
+# classify a sentence as describing the topic whose feature words it has the most of
 def assignTopics(reviews, featureWords):
-    topicAssignments = []       #2D array, a review has a topic assignment per sentence
+    topicAssignments = []  # 2D array, a review has a topic assignment per sentence
 
     for review in reviews:
-        assignments = []            #get a topic number per sentence
+        assignments = []  # get a topic number per sentence
 
-        for sentence in review:     
-            counter = {}        #counter dictionary, topic to feature word count
+        for sentence in review:
+            counter = {}  # counter dictionary, topic to feature word count
             for i in range(len(featureWords)):
                 counter[i] = 0
 
@@ -151,48 +150,79 @@ def assignTopics(reviews, featureWords):
 
                     if word in topicFeatureWords:
                         counter[topic] += 1
-                        
-            #assign topic number to the sentence
+
+            # assign topic number to the sentence
             print(counter)
             topicNum = max(counter.items(), key=operator.itemgetter(1))[0]
             assignments.append(topicNum)
 
         topicAssignments.append(assignments)
 
-    
     return topicAssignments
 
-#returns ratings of each topic for each review by sentiment analysis
-def assignTopicRatings(reviews, topicAssignments):
+# returns ratings of each topic for each review by sentiment analysis
+
+
+def assignTopicRatings(reviews, topicAssignments, aspects):
     topicRatings = []
 
+    sentimentAnalyzer = SentimentIntensityAnalyzer()
 
+    for i in range(len(reviews)):
+        review = reviews[i]
 
+        ratings = []  # topic ratings for this review
+
+        for j in range(len(aspects)):
+            ratings.append(0)
+
+        for j in range(len(review)):
+            sentence = review[j]
+            topic = topicAssignments[i][j]
+            rating = 0
+
+            for word in sentence:
+                sentiment = sentimentAnalyzer.polarity_scores(word)['compound']
+                rating += sentiment
+
+            # find average of sentiments in the sentence, between [-1, 1]
+            rating /= len(sentence)
+            ratings[topic] += rating
+
+        for k in range(len(aspects)):
+            rating = ratings[k]
+            rating *= 2  # range = [-2, 2]
+            rating += 3  # range = [1, 5]
+            ratings[k] = rating
+
+        topicRatings.append(ratings)
 
     return topicRatings
 
 
 def main():
-    aspects = ["Value", "Rooms", "Location", "Cleanliness", "Check in/front desk", "Service", "Business service"]
-    #aspect_weights = np.zeros((d, len(aspects))), d reviews
-    #aspect_ratings = np.zeros((d, len(aspects))), d reviews
+    aspects = ["Value", "Rooms", "Location", "Cleanliness",
+               "Check in/front desk", "Service", "Business service"]
+    # aspect_weights = np.zeros((d, len(aspects))), d reviews
+    # aspect_ratings = np.zeros((d, len(aspects))), d reviews
 
     stopWords = getStopWords("Data/StopWords.txt")
 
     featureWords = parseFeatureWords("Data/FeatureWords.txt")
-    
-    #reviews is a 3D array
-    #sentence is array of words
-    #a review is array of sentences
-    #ratings is 2D array
+
+    # reviews is a 3D array
+    # sentence is array of words
+    # a review is array of sentences
+    # ratings is 2D array
     reviews, ratings, vocab = parseReviews("Data/temp.txt", stopWords)
 
     topicAssignments = assignTopics(reviews, featureWords)
     print(topicAssignments)
 
-    #get topic ratings
-    topicRatings = assignTopicRatings(reviews, topicAssignments)
-    
+    # get topic ratings
+    topicRatings = assignTopicRatings(reviews, topicAssignments, aspects)
+    print(topicRatings)
+
 
 if __name__ == '__main__':
 
