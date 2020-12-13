@@ -162,8 +162,6 @@ def assignTopics(reviews, featureWords):
                         counter[topic] += 1
 
             # assign topic number to the sentence
-            # print("This is counter")
-            # print(counter)
             topicNum = max(counter.items(), key=operator.itemgetter(1))[0]
             assignments.append(topicNum)
 
@@ -209,8 +207,7 @@ def assignTopicRatings(reviews, topicAssignments, aspects):
 
     return topicRatings
 
-def getAspectWeight(topicRatings) :
-    
+def assignAspectWeight(topicRatings) :
     topic_weights = []
     for review in topicRatings:
         tmp_weight = [0] * 7
@@ -222,13 +219,11 @@ def getAspectWeight(topicRatings) :
             # get random weight values
             for i in range(len(aspect_weight)): 
                 tmp_weight[i] = round(random.uniform(0,1),3)
-            # print(tmp_weight)
 
             # normalize vector 
             total_val = sum(aspect_weight)
             for i in range(len(aspect_weight)):
                 tmp_weight[i] = round(tmp_weight[i]/total_val, 4)
-            # print(sum(tmp_weight))
 
             # mean is equal to the actual overall rating 
             mean = oratings[0]
@@ -236,15 +231,12 @@ def getAspectWeight(topicRatings) :
             #std dev is the 
             variance = sum((x - mean)**2 for x in oratings)/ len(oratings)
             stdev = variance ** 0.5
-            # print(stdev)
 
             # find overall rating from rating and weight 
             pred_orating = sum([a*b for a,b in zip(topicRatings[0], tmp_weight)])
-            # print(pred_orating)
 
             #calculate prob of getting that rating from norm dist 
             test_prob = scipy.stats.multivariate_normal(mean, stdev, 0.6).pdf(pred_orating)
-            # print(test_prob)
 
             # see if prob is higher than existing prob and if it is change aspect_weight to the new weight
             if(test_prob > curr_prob):
@@ -265,8 +257,6 @@ def getAspectWeight(topicRatings) :
 def main():
     aspects = ["Value", "Rooms", "Location", "Cleanliness",
                "Check in/front desk", "Service", "Business service"]
-    # aspect_weights = np.zeros((d, len(aspects))), d reviews
-    # aspect_ratings = np.zeros((d, len(aspects))), d reviews
 
     stopWords = getStopWords("Data/StopWords.txt")
 
@@ -285,7 +275,7 @@ def main():
     topicRatings = assignTopicRatings(reviews, topicAssignments, aspects)
     print(topicRatings)
 
-    topicWeights, pred_oratings = getAspectWeight(topicRatings)
+    topicWeights, pred_oratings = assignAspectWeight(topicRatings)
     print(topicWeights)
     print(pred_oratings)
 
