@@ -98,7 +98,7 @@ def parseReviews(filename, stopWords):
 
             if skip:
                 continue
-
+            ratingsInts.pop(0)
             ratings.append(ratingsInts)
 
             # split by sentence
@@ -253,6 +253,18 @@ def assignAspectWeight(topicRatings) :
     
     return topic_weights, pred_oratings
 
+# calculate mean square error between actual ratings and the topic ratinfs found
+def findMSE(topicRatings, ratings):
+
+    #calculate difference between these two arrays --> square it --> sum it up 
+    total_sum = 0
+    for i in range(len(topicRatings)):
+        mse = sum([(a-b)**2 for a,b in zip(ratings[i], topicRatings[i])])
+        total_sum += mse
+
+    mse = total_sum/(len(topicRatings[0]) * len(topicRatings))
+    return mse
+
 
 def main():
     aspects = ["Value", "Rooms", "Location", "Cleanliness",
@@ -278,6 +290,10 @@ def main():
     topicWeights, pred_oratings = assignAspectWeight(topicRatings)
     print(topicWeights)
     print(pred_oratings)
+
+    mse_val = findMSE(topicRatings, ratings)
+    print(mse_val)
+
 
 
 if __name__ == '__main__':
