@@ -209,10 +209,6 @@ def assignTopicRatings(reviews, topicAssignments, aspects):
 
     return topicRatings
 
-
-import tensorflow as tf
-import numpy as np
-
 def getAspectWeight(topicRatings) :
     
     topic_weights = []
