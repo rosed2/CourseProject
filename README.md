@@ -1,9 +1,9 @@
 # CS 410 CourseProject
 
-<ins>Project proposal:</ins>     
+<ins>Project Proposal:</ins>     
 We will be recreating the paper "Latent Aspect Rating Analysis Without Aspect Keyword Supervision."     
 
-<ins>Code overview:</ins>   
+<ins>Code Overview:</ins>   
 This code tries to implement Latent Aspect Rating Analysis (LARA) as a reproduction of research paper “Latent Aspect Rating Analysis without Aspect Keyword Supervision” by Hongning Wang, Yue Lu, and ChengXiang Zhai. It takes a set of reviews and a list of aspects/topics covered within them. It also takes a list of feature words for each topic. Then, it finds the reviewer’s ratings on these aspects and the weights the reviewer placed on these aspects to form the overall rating. This code can be used to analyze TripAdvisor reviews to find ratings on the following topics: Value, Rooms, Location, Cleanliness, Check in/front desk, Service, and Business service; and what weights the reviewer placed on each topic to construct the overall rating.      
       
 <ins>Implementation:</ins>      
