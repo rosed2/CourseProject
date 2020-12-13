@@ -1,12 +1,18 @@
 import numpy as np
 import nltk
+nltk.download('vader_lexicon')
 from nltk.stem import PorterStemmer
 import re
 import operator
+import random
+import scipy.stats
+import numpy as np
+from scipy.stats import multivariate_normal
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 
 numberAspects = 7
 
+oratings = []
 
 def getStopWords(filename):
     file = open(filename, "r")
@@ -78,7 +84,11 @@ def parseReviews(filename, stopWords):
             skip = False
             ratingsList = ratingLine.split('>')[1].split()
             ratingsInts = []
+            isOverallRating = 1
             for rating in ratingsList:
+                if isOverallRating == 1:
+                    isOverallRating = 0
+                    oratings.append(int(rating))
                 if rating == '-1':
                     print("found -1")
                     skip = True
@@ -152,7 +162,8 @@ def assignTopics(reviews, featureWords):
                         counter[topic] += 1
 
             # assign topic number to the sentence
-            print(counter)
+            # print("This is counter")
+            # print(counter)
             topicNum = max(counter.items(), key=operator.itemgetter(1))[0]
             assignments.append(topicNum)
 
@@ -160,9 +171,8 @@ def assignTopics(reviews, featureWords):
 
     return topicAssignments
 
+
 # returns ratings of each topic for each review by sentiment analysis
-
-
 def assignTopicRatings(reviews, topicAssignments, aspects):
     topicRatings = []
 
@@ -200,6 +210,62 @@ def assignTopicRatings(reviews, topicAssignments, aspects):
     return topicRatings
 
 
+import tensorflow as tf
+import numpy as np
+
+def getAspectWeight(topicRatings) :
+    
+    topic_weights = []
+    for review in topicRatings:
+        tmp_weight = [0] * 7
+        iters = 0
+        curr_prob = 0
+        aspect_weight = []
+
+        while iters < 100:
+            # get random weight values
+            for i in range(len(aspect_weight)): 
+                tmp_weight[i] = round(random.uniform(0,1),3)
+            # print(tmp_weight)
+
+            # normalize vector 
+            total_val = sum(aspect_weight)
+            for i in range(len(aspect_weight)):
+                tmp_weight[i] = round(tmp_weight[i]/total_val, 4)
+            # print(sum(tmp_weight))
+
+            # mean is equal to the actual overall rating 
+            mean = oratings[0]
+
+            #std dev is the 
+            variance = sum((x - mean)**2 for x in oratings)/ len(oratings)
+            stdev = variance ** 0.5
+            # print(stdev)
+
+            # find overall rating from rating and weight 
+            pred_orating = sum([a*b for a,b in zip(topicRatings[0], tmp_weight)])
+            # print(pred_orating)
+
+            #calculate prob of getting that rating from norm dist 
+            test_prob = scipy.stats.multivariate_normal(mean, stdev, 0.6).pdf(pred_orating)
+            # print(test_prob)
+
+            # see if prob is higher than existing prob and if it is change aspect_weight to the new weight
+            if(test_prob > curr_prob):
+                curr_prob = test_prob
+                aspect_weight = tmp_weight
+            iters += 1
+
+        topic_weights.append(aspect_weight)
+
+    # find predicted overall rating for the reviews
+    pred_oratings = []
+    for i in range(len(topicRatings)):
+        pred_oratings.append(sum([a*b for a,b in zip(topicRatings[i], topic_weights[i])]))
+    
+    return topic_weights, pred_oratings
+
+
 def main():
     aspects = ["Value", "Rooms", "Location", "Cleanliness",
                "Check in/front desk", "Service", "Business service"]
@@ -223,7 +289,10 @@ def main():
     topicRatings = assignTopicRatings(reviews, topicAssignments, aspects)
     print(topicRatings)
 
+    topicWeights, pred_oratings = getAspectWeight(topicRatings)
+    print(topicWeights)
+    print(pred_oratings)
+
 
 if __name__ == '__main__':
-
     main()
