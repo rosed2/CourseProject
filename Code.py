@@ -90,7 +90,7 @@ def parseReviews(filename, stopWords):
                     isOverallRating = 0
                     oratings.append(int(rating))
                 if rating == '-1':
-                    print("found -1")
+                    # print("found -1")
                     skip = True
                     break
                 else:
@@ -278,22 +278,28 @@ def main():
     # sentence is array of words
     # a review is array of sentences
     # ratings is 2D array
-    reviews, ratings, vocab = parseReviews("Data/temp.txt", stopWords)
+    reviews, ratings, vocab = parseReviews("Data/Reviews/hotel_72572_parsed.txt", stopWords)
 
     topicAssignments = assignTopics(reviews, featureWords)
-    print(topicAssignments)
+    # print(topicAssignments)
 
     # get topic ratings
     topicRatings = assignTopicRatings(reviews, topicAssignments, aspects)
-    print(topicRatings)
+    # print('\n')
 
     topicWeights, pred_oratings = assignAspectWeight(topicRatings)
-    print(topicWeights)
-    print(pred_oratings)
+    # print('\n')
+    # print(pred_oratings)
 
     mse_val = findMSE(topicRatings, ratings)
-    print(mse_val)
-
+    print("This is MSE: ", mse_val)
+    print("\n")
+    for i in range(len(topicRatings)):
+        print("This is topic Rating:")
+        print(topicRatings[i])
+        print("This is topic weight:")
+        print(topicWeights[i])
+        print("\n")
 
 
 if __name__ == '__main__':
