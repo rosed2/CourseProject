@@ -9,6 +9,9 @@ This code tries to implement Latent Aspect Rating Analysis (LARA) as a reproduct
 <ins>Implementation:</ins>      
 The code first preprocesses the reviews by removing stop words and stemming. Then the code assigns what topic each sentence in each review is about by comparing it to a list of user-defined topic feature words. The sentence is assigned the topic whose feature words it has the most of. Then, it uses sentiment analysis to determine topic ratings for each topic in each review. Next, it uses random variable initialization to determine the weights placed on each topic by the reviewer. We calculated which set of random weights returned the highest probability of getting the reviewer’s overall rating from a Normal distribution whose mean was the weighted mean of the aspect ratings we found.      
     
+<ins>Software Usage Tutorial Presentation:</ins>     
+https://illinois.zoom.us/rec/share/aHaip21p63f29jFbE96x2s2LgFm9d6Pa4qIdLK3IwpMeqnh-pJqWV9ZXdbejbLHJ.ThV8W0Z9PVQhu4fv?startTime=1607902233000      
+      
 <ins>Usage Notes:</ins>    
 The code requires nltk, scipy, and numpy. Install using pip or other preferred python installation method.     
 To use this code, download the repository, cd into the folder, and run the python file “code.py”.     
